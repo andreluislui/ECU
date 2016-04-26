@@ -5,6 +5,8 @@
  * Created on 9 de Fevereiro de 2015, 16:32
  */
 
+//Teste
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "config.h"
