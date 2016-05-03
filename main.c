@@ -3,6 +3,13 @@
  * Author: André
  *
  * Created on 9 de Fevereiro de 2015, 16:32
+ * 
+ * To Do List:
+ * - Mudar a variável de contagem de tempo de u16 para u32 (unsigned long)
+ * - Determinar onde o hardware falha para determinar o momento onde o motor desliga
+ * - Leitura da EEPROM 
+ * - Escrita da EEPROM
+ * - Conexão com LabVIEW
  */
 
 //Teste
