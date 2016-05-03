@@ -15,23 +15,30 @@
 #define LED_AZ PORTBbits.RB9
 #define INJ_1 PORTDbits.RD9
 
-/*
- * 
+//VARIAVEIS DE CONTROLE DE INJETOR E CENTELHA
+unsigned int u16_tempoentredentes = 0;      //Tempo entre dentes (10us)
+unsigned int u16_tempoanterior_cfalha = 0;  //Tempo entre dentes qualquer (10us)
+unsigned int u16_tempovolta = 0;            //Contagem do tempo da volta atual
+                                            //Varia com o tempo (10us)
+unsigned int u16_tempoanterior_volta = 0;   //Contagem do tempo da volta anterior 
+                                            //Fixo no tempo (10us)
+
+/**
+ * @Descricao Função responsáel pelo envio de dados com 1 bytes pela interface 
+ * serial 1. 
+ * @Parametro data Tipo: unsigned int | Dados: 0 - 255 | Resol.: 0..1 
  */
-
-unsigned int u16_rpm = 0;
-unsigned int u16_tempoentredentes = 0;
-unsigned int u16_tempovolta = 0;
-unsigned int u16_tempoanterior_cfalha = 0;
-unsigned int u16_contador = 0;
-unsigned int u16_tempoanterior_volta = 0;
-
 void WriteUART1_U08(unsigned char data){
 
     while (U1STAbits.TRMT==0);      //Espera desocupar o registrador
         U1TXREG = data;
 }
 
+/**
+ * @Descricao Função responsáel pelo envio de dados com 2 bytes pela interface 
+ * serial 1. 
+ * @Parametro data Tipo: unsigned int | Dados: 0 - 65535 | Resol.: 0..1 
+ */
 void WriteUART1_U16(unsigned int data){
     while (U1STAbits.TRMT==0);      //Espera desocupar o registrador
         U1TXREG = data;
@@ -153,7 +160,13 @@ void ignicao(unsigned char dwell, int avanco){
     }
 }
 
-//Interrupcao ADC
+/**
+ * @Descricao INTERRUPÇÂO DO CONVERSOR AD
+ * Leitura das portas analógicas ocorre em um esquema de varredura. 
+ * As portas setadas como analógicas, periodicamente são varridas e seus valores
+ * armazenados nos buffer's ADCBUF0..ADCBUFF. Ao fim dessa varredura, essa 
+ * interrupção ocorre. 
+ */
 void __attribute__((__interrupt__, __auto_psv__)) _ADCInterrupt(void)
 {
     IFS0bits.ADIF = 0;
@@ -164,59 +177,64 @@ void __attribute__((__interrupt__, __auto_psv__)) _ADCInterrupt(void)
 
 }
 
-//Interrupcao UART1
+/**
+ * @Descricao INTERRUPÇÂO DA INTERFACE SERIAL 1
+ * A interrupção ocorre quando a interface serial recebe algum dado. 
+ * Valor lido é obtido por meio do registrador U1RXREG.
+ */
 void __attribute__((__interrupt__, __auto_psv__)) _U1RXInterrupt(void)
 {
     IFS0bits.U1RXIF = 0;
     WriteUART1_U08(U1RXREG);
 }
 
-//Interrupcao timer1 (100ms)
+/**
+ * @Descricao INTERRUPÇÂO DE TIMER 1
+ * A interrupção de Timer 1 está setada para ocorrer com intervalo de 100ms.
+ */
 void __attribute__((__interrupt__, __auto_psv__)) _T1Interrupt(void)
 {
     IFS0bits.T1IF = 0;
-
-    //PORTDbits.RD0 = !PORTDbits.RD0;
     
     LED_AZ = !LED_AZ;
-    //LED_BR = !LED_BR;
-    
-    //Final do injetor
-    if (u16_contador < 360)
-        u16_contador++;
-    else
-        u16_contador = 0;
-
 }
 
-//Interrupcao timer2 (10us)
+/**
+ * @Descricao INTERRUPÇÂO DE TIMER 2
+ * A interrupção de Timer 1 está setada para ocorrer com intervalo de 10us.
+ * Nesse momento ocorre o incremento das variáveis que contam o tempo entre
+ * dentes da roda fônica e o tempo de uma volta. 
+ */
 void __attribute__((__interrupt__, __auto_psv__)) _T2Interrupt(void)
 {
     IFS0bits.T2IF = 0;
 
     //Conta tempo entre as interrupcoes
     u16_tempoentredentes ++;
-    u16_tempovolta ++;
-    
-
+    u16_tempovolta ++; 
     
 }
 
-//Interrupcao externa INT0
+/**
+ * @Descricao INTERRUPÇÂO EXTERNA 1
+ * Por meio de um sensor indutivo, fixado próximo à roda-fonica, ocorre 
+ * a interrupção por meio de pulsos externos. 
+ * Ocorre a atualização de variáveis. 
+ * 
+ */
 void __attribute__((__interrupt__, __auto_psv__)) _INT0Interrupt(void)
 {
     IFS0bits.INT0IF = 0;
     
+    //Verifica se a falha foi encontrada 
     if(u16_tempoentredentes > (2*u16_tempoanterior_cfalha) )
-    {   
-        //Achou a falha
+    {
         LED_BR = !LED_BR;
         u16_tempoanterior_volta = u16_tempovolta;
         u16_tempovolta = 0;
     }
     
     u16_tempoanterior_cfalha = u16_tempoentredentes;
-
     u16_tempoentredentes = 0;
 
 }
