@@ -23,12 +23,21 @@
 #define INJ_1 PORTDbits.RD9
 
 //VARIAVEIS DE CONTROLE DE INJETOR E CENTELHA
-unsigned int u16_tempoentredentes = 0;      //Tempo entre dentes (10us)
-unsigned int u16_tempoanterior_cfalha = 0;  //Tempo entre dentes qualquer (10us)
-unsigned int u16_tempovolta = 0;            //Contagem do tempo da volta atual
-                                            //Varia com o tempo (10us)
-unsigned int u16_tempoanterior_volta = 0;   //Contagem do tempo da volta anterior 
-                                            //Fixo no tempo (10us)
+unsigned int u16_ctrl_tempoentredentes = 0;         //Tempo entre dentes (10us)
+unsigned int u16_ctrl_tempoanterior_cfalha = 0;     //Tempo entre dentes qualquer (10us)
+unsigned int u16_ctrl_tempovolta = 0;               //Contagem do tempo da volta atual
+                                                    //Varia com o tempo (10us)
+unsigned int u16_ctrl_tempoanterior_volta = 0;      //Contagem do tempo da volta anterior 
+                                                //Fixo no tempo (10us)
+
+//VARIAVEIS BUFFERS ADC 
+unsigned int u16_adc_iat = 0;           //AN0
+unsigned int u16_adc_ect = 0;           //AN1
+unsigned int u16_adc_tps = 0;           //AN3
+unsigned int u16_adc_map = 0;           //AN4
+unsigned int u16_adc_lbd = 0;           //AN5
+unsigned int u16_adc_bat = 0;           //AN8
+unsigned int u16_adc_tec = 0;           //AN12
 
 /**
  * @Descricao Função responsáel pelo envio de dados com 1 bytes pela interface 
@@ -62,13 +71,13 @@ void WriteUART1_U16(unsigned int data){
  */
 void injetor_posicao(unsigned int liga, unsigned int desliga){
 
-    float   aux_liga = ((float)u16_tempoanterior_volta/360)*((float)liga), 
-            aux_desliga = ((float)u16_tempoanterior_volta/360)*((float)desliga);
+    float   aux_liga = ((float)u16_ctrl_tempoanterior_volta/360)*((float)liga), 
+            aux_desliga = ((float)u16_ctrl_tempoanterior_volta/360)*((float)desliga);
     
     // Pulso se mantém dentro de uma volta 
     // 0 -------- Liga ----------- Desliga ------- 360/0
     if(aux_liga <= aux_desliga){
-        if( (u16_tempovolta >= aux_liga) && (u16_tempovolta < aux_desliga) )
+        if( (u16_ctrl_tempovolta >= aux_liga) && (u16_ctrl_tempovolta < aux_desliga) )
             //PORTDbits.RD1 = 0;
             INJ_1 = 0;
         else 
@@ -78,7 +87,7 @@ void injetor_posicao(unsigned int liga, unsigned int desliga){
     //Pulso começa em uma volta e acaba em outra
     // 0 ------- Liga ------- 360/0 ------- Desliga ------ 
     else{
-        if( (u16_tempovolta >= aux_liga) || (u16_tempovolta < aux_desliga) )
+        if( (u16_ctrl_tempovolta >= aux_liga) || (u16_ctrl_tempovolta < aux_desliga) )
             //PORTDbits.RD1 = 0;
             INJ_1 = 0;
         else 
@@ -100,8 +109,8 @@ void injetor_tempo(unsigned char tempo, unsigned int fase){
                     aux_desliga = 0;
     unsigned int    aux_tempo = 0;
     
-    aux_desliga = ((float)u16_tempoanterior_volta/360)*((float)fase);
-    aux_liga = u16_tempoanterior_volta - ( ((unsigned int)tempo)*100 - aux_desliga);
+    aux_desliga = ((float)u16_ctrl_tempoanterior_volta/360)*((float)fase);
+    aux_liga = u16_ctrl_tempoanterior_volta - ( ((unsigned int)tempo)*100 - aux_desliga);
     aux_tempo = tempo*100;
 
     // Pulso se mantém dentro de uma volta 
@@ -109,7 +118,7 @@ void injetor_tempo(unsigned char tempo, unsigned int fase){
     if(aux_tempo <= aux_desliga){
         //Posicao do "Liga"
         aux_liga = aux_desliga - ( ((unsigned int)tempo)*100 );
-        if( (u16_tempovolta >= aux_liga) && (u16_tempovolta < aux_desliga) )
+        if( (u16_ctrl_tempovolta >= aux_liga) && (u16_ctrl_tempovolta < aux_desliga) )
             //PORTDbits.RD1 = 0;
             INJ_1 = 0;
         else 
@@ -120,8 +129,8 @@ void injetor_tempo(unsigned char tempo, unsigned int fase){
     // 0 ------- Liga ------- 360/0 ------- Desliga ------ 
     else{
         //Posicao do "Liga"
-        aux_liga = u16_tempoanterior_volta - ( ((unsigned int)tempo)*100 - aux_desliga);
-        if( (u16_tempovolta >= aux_liga) || (u16_tempovolta < aux_desliga) )
+        aux_liga = u16_ctrl_tempoanterior_volta - ( ((unsigned int)tempo)*100 - aux_desliga);
+        if( (u16_ctrl_tempovolta >= aux_liga) || (u16_ctrl_tempovolta < aux_desliga) )
             //PORTDbits.RD1 = 0;
             INJ_1 = 0;
         else 
@@ -141,8 +150,8 @@ void ignicao(unsigned char dwell, int avanco){
     
     aux_avanco = 360 - avanco;
     
-    aux_desliga = ((float)u16_tempoanterior_volta/360)*((float)aux_avanco);
-    aux_liga = u16_tempoanterior_volta - ( ((unsigned int)dwell)*100 - aux_desliga);
+    aux_desliga = ((float)u16_ctrl_tempoanterior_volta/360)*((float)aux_avanco);
+    aux_liga = u16_ctrl_tempoanterior_volta - ( ((unsigned int)dwell)*100 - aux_desliga);
     aux_tempo = dwell*100;
 
     // Pulso se mantém dentro de uma volta 
@@ -150,7 +159,7 @@ void ignicao(unsigned char dwell, int avanco){
     if(aux_tempo <= aux_desliga){
         //Posicao do "Liga"
         aux_liga = aux_desliga - ( ((int)dwell)*100 );
-        if( (u16_tempovolta >= aux_liga) && (u16_tempovolta < aux_desliga) )
+        if( (u16_ctrl_tempovolta >= aux_liga) && (u16_ctrl_tempovolta < aux_desliga) )
             PORTBbits.RB12 = 1;
         else 
             PORTBbits.RB12 = 0;
@@ -159,8 +168,8 @@ void ignicao(unsigned char dwell, int avanco){
     // 0 ------- Liga ------- 360/0 ------- Desliga ------ 
     else{
         //Posicao do "Liga"
-        aux_liga = u16_tempoanterior_volta - ( ((unsigned int)dwell)*100 - aux_desliga);
-        if( (u16_tempovolta >= aux_liga) || (u16_tempovolta < aux_desliga) )
+        aux_liga = u16_ctrl_tempoanterior_volta - ( ((unsigned int)dwell)*100 - aux_desliga);
+        if( (u16_ctrl_tempovolta >= aux_liga) || (u16_ctrl_tempovolta < aux_desliga) )
             PORTBbits.RB12 = 1;
         else 
             PORTBbits.RB12 = 0;
@@ -217,8 +226,8 @@ void __attribute__((__interrupt__, __auto_psv__)) _T2Interrupt(void)
     IFS0bits.T2IF = 0;
 
     //Conta tempo entre as interrupcoes
-    u16_tempoentredentes ++;
-    u16_tempovolta ++; 
+    u16_ctrl_tempoentredentes ++;
+    u16_ctrl_tempovolta ++; 
     
 }
 
@@ -234,15 +243,15 @@ void __attribute__((__interrupt__, __auto_psv__)) _INT0Interrupt(void)
     IFS0bits.INT0IF = 0;
     
     //Verifica se a falha foi encontrada 
-    if(u16_tempoentredentes > (2*u16_tempoanterior_cfalha) )
+    if(u16_ctrl_tempoentredentes > (2*u16_ctrl_tempoanterior_cfalha) )
     {
         LED_BR = !LED_BR;
-        u16_tempoanterior_volta = u16_tempovolta;
-        u16_tempovolta = 0;
+        u16_ctrl_tempoanterior_volta = u16_ctrl_tempovolta;
+        u16_ctrl_tempovolta = 0;
     }
     
-    u16_tempoanterior_cfalha = u16_tempoentredentes;
-    u16_tempoentredentes = 0;
+    u16_ctrl_tempoanterior_cfalha = u16_ctrl_tempoentredentes;
+    u16_ctrl_tempoentredentes = 0;
 
 }
 
