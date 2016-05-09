@@ -28,7 +28,11 @@ unsigned int u16_ctrl_tempoanterior_cfalha = 0;     //Tempo entre dentes qualque
 unsigned int u16_ctrl_tempovolta = 0;               //Contagem do tempo da volta atual
                                                     //Varia com o tempo (10us)
 unsigned int u16_ctrl_tempoanterior_volta = 0;      //Contagem do tempo da volta anterior 
-                                                //Fixo no tempo (10us)
+                                                    //Fixo no tempo (10us)
+unsigned char u08_ctrl_tempoinjecao = 0;            //Tempo de injecao
+unsigned int  u16_ctrl_faseinjecao = 0;             //Fase do termino da injecao
+unsigned char u08_ctrl_dwellinjecao = 0;            //Tempo de carga da bobina de ignicao
+int s16_ctrl_avancoinjecao = 0;                     //Posicao do disparo da centelha
 
 //VARIAVEIS BUFFERS ADC 
 unsigned int u16_adc_iat = 0;           //AN0
@@ -186,10 +190,14 @@ void ignicao(unsigned char dwell, int avanco){
 void __attribute__((__interrupt__, __auto_psv__)) _ADCInterrupt(void)
 {
     IFS0bits.ADIF = 0;
-
-    //WriteUART1(ADCBUF0);
-    //Até...
-    //WriteUART1(ADCBUFF);
+    
+    u16_adc_iat = ADCBUF0;
+    u16_adc_ect = ADCBUF1;
+    u16_adc_tps = ADCBUF3;
+    u16_adc_map = ADCBUF4;
+    u16_adc_lbd = ADCBUF5;
+    u16_adc_bat = ADCBUF8;
+    u16_adc_tec = ADCBUFC;
 
 }
 
