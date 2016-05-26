@@ -33,6 +33,7 @@ unsigned char u08_ctrl_tempoinjecao = 0;            //Tempo de injecao
 unsigned int  u16_ctrl_faseinjecao = 0;             //Fase do termino da injecao
 unsigned char u08_ctrl_dwellinjecao = 0;            //Tempo de carga da bobina de ignicao
 int s16_ctrl_avancoinjecao = 0;                     //Posicao do disparo da centelha
+unsigned char u08_ctrl_motorligado = 0;             //Variavel indica se o motor está ligado
 
 //VARIAVEIS BUFFERS ADC 
 unsigned int u16_adc_iat = 0;           //AN0
@@ -210,6 +211,17 @@ void __attribute__((__interrupt__, __auto_psv__)) _U1RXInterrupt(void)
 {
     IFS0bits.U1RXIF = 0;
     WriteUART1_U08(U1RXREG);
+    
+    /*
+    switch (U1RXREG){
+        case 0x0B:
+            //Dados para o programa do PC 
+            //Envia dados
+            break; 
+        default:
+            break;
+    }
+    */
 }
 
 /**
@@ -219,6 +231,9 @@ void __attribute__((__interrupt__, __auto_psv__)) _U1RXInterrupt(void)
 void __attribute__((__interrupt__, __auto_psv__)) _T1Interrupt(void)
 {
     IFS0bits.T1IF = 0;
+    
+    WriteUART1_U08(u08_ctrl_motorligado);
+    WriteUART1_U08('\n');
     
     LED_AZ = !LED_AZ;
 }
@@ -232,11 +247,18 @@ void __attribute__((__interrupt__, __auto_psv__)) _T1Interrupt(void)
 void __attribute__((__interrupt__, __auto_psv__)) _T2Interrupt(void)
 {
     IFS0bits.T2IF = 0;
-
+    
     //Conta tempo entre as interrupcoes
     u16_ctrl_tempoentredentes ++;
     u16_ctrl_tempovolta ++; 
     
+}
+
+void __attribute__((__interrupt__, __auto_psv__)) _T3Interrupt(void)
+{
+    IFS0bits.T3IF = 0;
+    LED_BR = !LED_BR;
+    u08_ctrl_motorligado = 0;
 }
 
 /**
@@ -253,14 +275,19 @@ void __attribute__((__interrupt__, __auto_psv__)) _INT0Interrupt(void)
     //Verifica se a falha foi encontrada 
     if(u16_ctrl_tempoentredentes > (2*u16_ctrl_tempoanterior_cfalha) )
     {
-        LED_BR = !LED_BR;
+        //LED_BR = !LED_BR;
         u16_ctrl_tempoanterior_volta = u16_ctrl_tempovolta;
         u16_ctrl_tempovolta = 0;
     }
     
     u16_ctrl_tempoanterior_cfalha = u16_ctrl_tempoentredentes;
     u16_ctrl_tempoentredentes = 0;
-
+    
+    //Verificação se o motor está ligado 
+    u08_ctrl_motorligado = 1;
+    //TMR3 = 7839;             //Não deixa o timer disparar
+    TMR3 = 0;             //Não deixa o timer disparar
+    
 }
 
 int main(int argc, char** argv) {
@@ -301,6 +328,16 @@ int main(int argc, char** argv) {
     IEC0bits.T2IE       = 1;    //Habilita a interrupcao
     T2CONbits.TON       = 1;    //Timer Ligado
 
+    //Timer3
+    // Period = PR1 * prescaler * Tcy
+    T3CONbits.TCS       = 0;    //Oscilador interno
+    T3CONbits.TCKPS     = 3;    //Prescale
+    PR3 = 7839;
+    //Interrupcao Timer3
+    IFS0bits.T3IF       = 0;    //Reset Flag
+    IEC0bits.T3IE       = 1;    //Habilita a interrupcao
+    T3CONbits.TON       = 1;    //Timer Ligado
+    
     //UART 1
     U1MODEbits.UARTEN   = 1;    //Habilita UART1
     U1MODEbits.ALTIO    = 1;    //Porta alternativa
@@ -331,11 +368,16 @@ int main(int argc, char** argv) {
     
     
     while(1){
-
-        //injetor_posicao(10, 50);
-        injetor_tempo(10, 50);
-        //injetor_tempo(10, 180);
-        //ignicao(1, 20); 
+        
+        if(u08_ctrl_motorligado){
+            //injetor_posicao(10, 50);
+            injetor_tempo(10, 50);
+            //injetor_tempo(10, 180);
+            //ignicao(1, 20); 
+        }
+        else{
+            INJ_1 = 1;
+        }
 
     }
 
