@@ -22,6 +22,9 @@
 #define LED_AZ PORTBbits.RB9
 #define INJ_1 PORTDbits.RD9
 
+#define INJ_ON 0
+#define INJ_OFF 1
+
 //VARIAVEIS DE CONTROLE DE INJETOR E CENTELHA
 unsigned int u16_ctrl_tempoentredentes = 0;         //Tempo entre dentes (10us)
 unsigned int u16_ctrl_tempoanterior_cfalha = 0;     //Tempo entre dentes qualquer (10us)
@@ -84,20 +87,20 @@ void injetor_posicao(unsigned int liga, unsigned int desliga){
     if(aux_liga <= aux_desliga){
         if( (u16_ctrl_tempovolta >= aux_liga) && (u16_ctrl_tempovolta < aux_desliga) )
             //PORTDbits.RD1 = 0;
-            INJ_1 = 0;
+            INJ_1 = INJ_ON;
         else 
             //PORTDbits.RD1 = 1;
-            INJ_1 = 1;
+            INJ_1 = INJ_OFF;
     }
     //Pulso começa em uma volta e acaba em outra
     // 0 ------- Liga ------- 360/0 ------- Desliga ------ 
     else{
         if( (u16_ctrl_tempovolta >= aux_liga) || (u16_ctrl_tempovolta < aux_desliga) )
             //PORTDbits.RD1 = 0;
-            INJ_1 = 0;
+            INJ_1 = INJ_ON;
         else 
             //PORTDbits.RD1 = 1;
-            INJ_1 = 1;
+            INJ_1 = INJ_OFF;
     }    
 }
 
@@ -125,10 +128,10 @@ void injetor_tempo(unsigned char tempo, unsigned int fase){
         aux_liga = aux_desliga - ( ((unsigned int)tempo)*100 );
         if( (u16_ctrl_tempovolta >= aux_liga) && (u16_ctrl_tempovolta < aux_desliga) )
             //PORTDbits.RD1 = 0;
-            INJ_1 = 0;
+            INJ_1 = INJ_ON;
         else 
             //PORTDbits.RD1 = 1;
-            INJ_1 = 1;
+            INJ_1 = INJ_OFF;
     }
     //Pulso começa em uma volta e acaba em outra
     // 0 ------- Liga ------- 360/0 ------- Desliga ------ 
@@ -137,10 +140,10 @@ void injetor_tempo(unsigned char tempo, unsigned int fase){
         aux_liga = u16_ctrl_tempoanterior_volta - ( ((unsigned int)tempo)*100 - aux_desliga);
         if( (u16_ctrl_tempovolta >= aux_liga) || (u16_ctrl_tempovolta < aux_desliga) )
             //PORTDbits.RD1 = 0;
-            INJ_1 = 0;
+            INJ_1 = INJ_ON;
         else 
             //PORTDbits.RD1 = 1;
-            INJ_1 = 1;
+            INJ_1 = INJ_OFF;
     }
 
 }
@@ -376,7 +379,7 @@ int main(int argc, char** argv) {
             //ignicao(1, 20); 
         }
         else{
-            INJ_1 = 1;
+            INJ_1 = INJ_OFF;
         }
 
     }
