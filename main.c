@@ -65,9 +65,9 @@ void WriteUART1_U08(unsigned char data){
  */
 void WriteUART1_U16(unsigned int data){
     while (U1STAbits.TRMT==0);      //Espera desocupar o registrador
-        U1TXREG = data;
-    while (U1STAbits.TRMT==0);      //Espera desocupar o registrador
         U1TXREG = data>>8;
+    while (U1STAbits.TRMT==0);      //Espera desocupar o registrador
+        U1TXREG = data;
 }
 
 /**
@@ -213,18 +213,20 @@ void __attribute__((__interrupt__, __auto_psv__)) _ADCInterrupt(void)
 void __attribute__((__interrupt__, __auto_psv__)) _U1RXInterrupt(void)
 {
     IFS0bits.U1RXIF = 0;
-    WriteUART1_U08(U1RXREG);
     
-    /*
     switch (U1RXREG){
-        case 0x0B:
+        case 'D':
             //Dados para o programa do PC 
             //Envia dados
+            WriteUART1_U16(u16_ctrl_tempoanterior_volta);
             break; 
+        case 'S':
+            //Desliga Motor 
+            break;
         default:
             break;
     }
-    */
+    
 }
 
 /**
@@ -235,15 +237,15 @@ void __attribute__((__interrupt__, __auto_psv__)) _T1Interrupt(void)
 {
     IFS0bits.T1IF = 0;
     
-    WriteUART1_U08(u08_ctrl_motorligado);
-    WriteUART1_U08('\n');
+    //WriteUART1_U08(u08_ctrl_motorligado);
+    //WriteUART1_U08('\n');
     
     LED_AZ = !LED_AZ;
 }
 
 /**
  * @Descricao INTERRUPÇÂO DE TIMER 2
- * A interrupção de Timer 1 está setada para ocorrer com intervalo de 10us.
+ * A interrupção de Timer 2 está setada para ocorrer com intervalo de 10us.
  * Nesse momento ocorre o incremento das variáveis que contam o tempo entre
  * dentes da roda fônica e o tempo de uma volta. 
  */
@@ -254,9 +256,14 @@ void __attribute__((__interrupt__, __auto_psv__)) _T2Interrupt(void)
     //Conta tempo entre as interrupcoes
     u16_ctrl_tempoentredentes ++;
     u16_ctrl_tempovolta ++; 
-    
 }
 
+/**
+ * @Descricao INTERRUPÇÂO DE TIMER 3
+ * A interrupção de Timer 3 está setada para ocorrer com intervalo de 100ms.
+ * Nesse momento ocorre a atribuição de False para a flag de motor ligado. 
+ * Essa variavel é setada para True quando ocorre a interrupção externa 1.
+ */
 void __attribute__((__interrupt__, __auto_psv__)) _T3Interrupt(void)
 {
     IFS0bits.T3IF = 0;
@@ -269,7 +276,6 @@ void __attribute__((__interrupt__, __auto_psv__)) _T3Interrupt(void)
  * Por meio de um sensor indutivo, fixado próximo à roda-fonica, ocorre 
  * a interrupção por meio de pulsos externos. 
  * Ocorre a atualização de variáveis. 
- * 
  */
 void __attribute__((__interrupt__, __auto_psv__)) _INT0Interrupt(void)
 {
