@@ -17,13 +17,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "config.h"
+#include "Portas.h"
+#include "SPI.h"
 
-#define LED_BR PORTBbits.RB10
-#define LED_AZ PORTBbits.RB9
-#define INJ_1 PORTDbits.RD9
+//#define LED_BR PORTBbits.RB10         //Portas.h
+//#define LED_AZ PORTBbits.RB9
+//#define IGN_1 PORTBbits.RB12
+//#define INJ_1 PORTDbits.RD9
 
-#define INJ_ON 0
-#define INJ_OFF 1
+//#define INJ_ON 0
+//#define INJ_OFF 1
+
+//#define IGN_ON 0
+//#define IGN_OFF 1
 
 //VARIAVEIS DE CONTROLE DE INJETOR E CENTELHA
 unsigned int u16_ctrl_tempoentredentes = 0;         //Tempo entre dentes (10us)
@@ -32,11 +38,16 @@ unsigned int u16_ctrl_tempovolta = 0;               //Contagem do tempo da volta
                                                     //Varia com o tempo (10us)
 unsigned int u16_ctrl_tempoanterior_volta = 0;      //Contagem do tempo da volta anterior 
                                                     //Fixo no tempo (10us)
-unsigned char u08_ctrl_tempoinjecao = 0;            //Tempo de injecao
-unsigned int  u16_ctrl_faseinjecao = 0;             //Fase do termino da injecao
-unsigned char u08_ctrl_dwellinjecao = 0;            //Tempo de carga da bobina de ignicao
-int s16_ctrl_avancoinjecao = 0;                     //Posicao do disparo da centelha
 unsigned char u08_ctrl_motorligado = 0;             //Variavel indica se o motor está ligado
+
+//PARAMETROS DE CONTROLE DE INJETOR E CENTELHA
+unsigned char u08_prmt_tempoinjecao = 0;            //Tempo de injecao
+unsigned int  u16_prmt_faseinjecao = 0;             //Fase do termino da injecao
+unsigned char u08_prmt_dwelligicao = 0;            //Tempo de carga da bobina de ignicao
+int s16_prmt_avancoignicao = 0;                     //Posicao do disparo da centelha
+
+//VARIAVEIS TELEMETRIA
+float f32_tlmt_rpm = 0;
 
 //VARIAVEIS BUFFERS ADC 
 unsigned int u16_adc_iat = 0;           //AN0
@@ -168,9 +179,9 @@ void ignicao(unsigned char dwell, int avanco){
         //Posicao do "Liga"
         aux_liga = aux_desliga - ( ((int)dwell)*100 );
         if( (u16_ctrl_tempovolta >= aux_liga) && (u16_ctrl_tempovolta < aux_desliga) )
-            PORTBbits.RB12 = 1;
+            IGN_1 = IGN_OFF;
         else 
-            PORTBbits.RB12 = 0;
+            IGN_1 = IGN_ON;
     }
     //Pulso começa em uma volta e acaba em outra
     // 0 ------- Liga ------- 360/0 ------- Desliga ------ 
@@ -178,9 +189,9 @@ void ignicao(unsigned char dwell, int avanco){
         //Posicao do "Liga"
         aux_liga = u16_ctrl_tempoanterior_volta - ( ((unsigned int)dwell)*100 - aux_desliga);
         if( (u16_ctrl_tempovolta >= aux_liga) || (u16_ctrl_tempovolta < aux_desliga) )
-            PORTBbits.RB12 = 1;
+            IGN_1 = IGN_OFF;
         else 
-            PORTBbits.RB12 = 0;
+            IGN_1 = IGN_ON;
     }
 }
 
@@ -218,7 +229,8 @@ void __attribute__((__interrupt__, __auto_psv__)) _U1RXInterrupt(void)
         case 'D':
             //Dados para o programa do PC 
             //Envia dados
-            WriteUART1_U16(u16_ctrl_tempoanterior_volta);
+            //WriteUART1_U16(u16_ctrl_tempoanterior_volta);
+            WriteUART1_U16( (unsigned int)f32_tlmt_rpm );
             break; 
         case 'S':
             //Desliga Motor 
@@ -236,10 +248,9 @@ void __attribute__((__interrupt__, __auto_psv__)) _U1RXInterrupt(void)
 void __attribute__((__interrupt__, __auto_psv__)) _T1Interrupt(void)
 {
     IFS0bits.T1IF = 0;
-    
-    //WriteUART1_U08(u08_ctrl_motorligado);
+    //WriteUART1_U16(u16_ctrl_tempoanterior_volta);
+    //WriteUART1_U16( (unsigned int)f32_tlmt_rpm );
     //WriteUART1_U08('\n');
-    
     LED_AZ = !LED_AZ;
 }
 
@@ -303,12 +314,13 @@ int main(int argc, char** argv) {
 
     //Ports I/O
     //LEDS
-    TRISBbits.TRISB10 = 0;
-    LED_BR = 1;
-    TRISBbits.TRISB9 = 0;
-    LED_AZ = 1;
-    TRISDbits.TRISD9 = 0;
-    INJ_1 = 1;
+    InitPortas();
+    //TRISBbits.TRISB10 = 0;        //Portas.c
+    //LED_BR = 1;
+    //TRISBbits.TRISB9 = 0;
+    //LED_AZ = 1;
+    //TRISDbits.TRISD9 = 0;
+    //INJ_1 = 1;
     
 
     //Interrupcao Externa 1
@@ -366,7 +378,7 @@ int main(int argc, char** argv) {
     ADCON1bits.ASAM     = 1;    //Metodo acima contínuo
     ADCON1bits.SAMP     = 1;    //Inicia as conversoes
     //ADPCFG              = 0b1111110111111111;
-    ADPCFG              = 0b1111111111111111;    //-> Colocar 0 nas entradas analógicas
+    //ADPCFG              = 0b1111111111111111;    //-> Colocar 0 nas entradas analógicas   //Portas.c
     ADCSSL              = 0b1111111111111111;
     ADCON1bits.ADON     = 1;    //Ativa o conversor
     
@@ -383,9 +395,21 @@ int main(int argc, char** argv) {
             injetor_tempo(10, 50);
             //injetor_tempo(10, 180);
             //ignicao(1, 20); 
+            
+            //Calculo de parametros;
+            f32_tlmt_rpm = (6000000/u16_ctrl_tempoanterior_volta);
+
+                
         }
         else{
             INJ_1 = INJ_OFF;
+            u16_ctrl_tempoentredentes = 0;
+            u16_ctrl_tempoanterior_cfalha = 0;    
+            u16_ctrl_tempovolta = 0;
+            u16_ctrl_tempoanterior_volta = 0;                  
+            u08_ctrl_motorligado = 0;
+            
+            f32_tlmt_rpm = 0;
         }
 
     }
