@@ -18,6 +18,8 @@
 #include <stdlib.h>
 #include "config.h"
 #include "Portas.h"
+//#include "Serial.h"
+//#include "Timer.h"
 #include "SPI.h"
 
 //#define LED_BR PORTBbits.RB10         //Portas.h
@@ -322,6 +324,11 @@ int main(int argc, char** argv) {
     //TRISDbits.TRISD9 = 0;
     //INJ_1 = 1;
     
+    //Timer1
+    //InitTimer();
+    
+    //SPI - Testar
+    InitSPI();
 
     //Interrupcao Externa 1
     INTCON2bits.INT0EP  = 1;    //Borda de descida
