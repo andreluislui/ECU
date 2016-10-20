@@ -7,6 +7,8 @@
       <itemPath>config.h</itemPath>
       <itemPath>SPI.h</itemPath>
       <itemPath>Portas.h</itemPath>
+      <itemPath>Timers.h</itemPath>
+      <itemPath>Serial.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -18,6 +20,8 @@
       <itemPath>main.c</itemPath>
       <itemPath>Portas.c</itemPath>
       <itemPath>SPI.c</itemPath>
+      <itemPath>Timers.c</itemPath>
+      <itemPath>Serial.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

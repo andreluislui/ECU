@@ -18,20 +18,9 @@
 #include <stdlib.h>
 #include "config.h"
 #include "Portas.h"
-//#include "Serial.h"
-//#include "Timer.h"
+#include "Serial.h"
+#include "Timers.h"
 #include "SPI.h"
-
-//#define LED_BR PORTBbits.RB10         //Portas.h
-//#define LED_AZ PORTBbits.RB9
-//#define IGN_1 PORTBbits.RB12
-//#define INJ_1 PORTDbits.RD9
-
-//#define INJ_ON 0
-//#define INJ_OFF 1
-
-//#define IGN_ON 0
-//#define IGN_OFF 1
 
 //VARIAVEIS DE CONTROLE DE INJETOR E CENTELHA
 unsigned int u16_ctrl_tempoentredentes = 0;         //Tempo entre dentes (10us)
@@ -43,10 +32,10 @@ unsigned int u16_ctrl_tempoanterior_volta = 0;      //Contagem do tempo da volta
 unsigned char u08_ctrl_motorligado = 0;             //Variavel indica se o motor está ligado
 
 //PARAMETROS DE CONTROLE DE INJETOR E CENTELHA
-unsigned char u08_prmt_tempoinjecao = 0;            //Tempo de injecao
-unsigned int  u16_prmt_faseinjecao = 0;             //Fase do termino da injecao
-unsigned char u08_prmt_dwelligicao = 0;            //Tempo de carga da bobina de ignicao
-int s16_prmt_avancoignicao = 0;                     //Posicao do disparo da centelha
+unsigned char u08_prmt_tempoinjecao = 1;            //Tempo de injecao
+unsigned int  u16_prmt_faseinjecao = 2;             //Fase do termino da injecao
+unsigned char u08_prmt_dwellignicao = 3;            //Tempo de carga da bobina de ignicao
+int s16_prmt_avancoignicao = 4;                     //Posicao do disparo da centelha
 
 //VARIAVEIS TELEMETRIA
 float f32_tlmt_rpm = 0;
@@ -60,27 +49,49 @@ unsigned int u16_adc_lbd = 0;           //AN5
 unsigned int u16_adc_bat = 0;           //AN8
 unsigned int u16_adc_tec = 0;           //AN12
 
-/**
- * @Descricao Função responsáel pelo envio de dados com 1 bytes pela interface 
- * serial 1. 
- * @Parametro data Tipo: unsigned int | Dados: 0 - 255 | Resol.: 0..1 
- */
-void WriteUART1_U08(unsigned char data){
+//FLAGS DE CONTROLE
+unsigned char u08_flg_modorecebe = 0;
+unsigned char u08_cnt_modorecebe = 0;
 
-    while (U1STAbits.TRMT==0);      //Espera desocupar o registrador
-        U1TXREG = data;
+void SalvarDadosEEPROM(){
+    unsigned char aux;
+    EEPROM_Write_Byte(u08_prmt_tempoinjecao, 0x000);
+    aux = (u16_prmt_faseinjecao>>8) & 0xFF;
+    EEPROM_Write_Byte(aux, 0x001);
+    EEPROM_Write_Byte((unsigned char) u16_prmt_faseinjecao, 0x002);
+    EEPROM_Write_Byte(u08_prmt_dwellignicao, 0x003);
+    aux = (s16_prmt_avancoignicao>>8) & 0xFF;
+    EEPROM_Write_Byte(aux, 0x004);
+    EEPROM_Write_Byte((unsigned char) s16_prmt_avancoignicao, 0x005);
 }
 
-/**
- * @Descricao Função responsáel pelo envio de dados com 2 bytes pela interface 
- * serial 1. 
- * @Parametro data Tipo: unsigned int | Dados: 0 - 65535 | Resol.: 0..1 
- */
-void WriteUART1_U16(unsigned int data){
-    while (U1STAbits.TRMT==0);      //Espera desocupar o registrador
-        U1TXREG = data>>8;
-    while (U1STAbits.TRMT==0);      //Espera desocupar o registrador
-        U1TXREG = data;
+void LerDadosEEPROM(){
+    //Leitura dos dados da EEPROM
+    //Endereços
+    u08_prmt_tempoinjecao = EEPROM_Read_Byte(0x000);
+    u16_prmt_faseinjecao = EEPROM_Read_Byte(0x001);
+    u16_prmt_faseinjecao = u16_prmt_faseinjecao<<8;
+    u16_prmt_faseinjecao = u16_prmt_faseinjecao | EEPROM_Read_Byte(0x002);
+    u08_prmt_dwellignicao = EEPROM_Read_Byte(0x003);
+    s16_prmt_avancoignicao = EEPROM_Read_Byte(0x004);
+    s16_prmt_avancoignicao = s16_prmt_avancoignicao<<8;
+    s16_prmt_avancoignicao = s16_prmt_avancoignicao | EEPROM_Read_Byte(0x005);
+}
+
+void EnviaDadosUSB(){
+    //Dados para o programa do PC 
+            WriteUART1_U16( (unsigned int)f32_tlmt_rpm );
+            WriteUART1_U08(u08_prmt_tempoinjecao);
+            WriteUART1_U16(u16_prmt_faseinjecao);
+            WriteUART1_U08(u08_prmt_dwellignicao);
+            WriteUART1_U16(s16_prmt_avancoignicao);
+            WriteUART1_U16(u16_adc_iat);
+            WriteUART1_U16(u16_adc_ect);
+            WriteUART1_U16(u16_adc_tps);
+            WriteUART1_U16(u16_adc_map);
+            WriteUART1_U16(u16_adc_lbd);
+            WriteUART1_U16(u16_adc_bat);
+            WriteUART1_U16(u16_adc_tec);
 }
 
 /**
@@ -227,20 +238,63 @@ void __attribute__((__interrupt__, __auto_psv__)) _U1RXInterrupt(void)
 {
     IFS0bits.U1RXIF = 0;
     
-    switch (U1RXREG){
+    if(! u08_flg_modorecebe){
+        switch (U1RXREG){
         case 'D':
-            //Dados para o programa do PC 
-            //Envia dados
-            //WriteUART1_U16(u16_ctrl_tempoanterior_volta);
-            WriteUART1_U16( (unsigned int)f32_tlmt_rpm );
+            EnviaDadosUSB();
             break; 
-        case 'S':
-            //Desliga Motor 
+        case 'U':
+            //Atualiza parametros via PC
+            u08_flg_modorecebe = 1;
+            u08_cnt_modorecebe = 0;
+            break;
+        case 'E':
+            //Grava parametros na EEPROM
+            SalvarDadosEEPROM();
             break;
         default:
             break;
+        }          
     }
-    
+    else 
+    {
+        switch (u08_cnt_modorecebe){
+            case 0:
+                u08_prmt_tempoinjecao = U1RXREG;
+                u08_cnt_modorecebe++;
+                break;
+            case 1:
+                u16_prmt_faseinjecao = U1RXREG;
+                u16_prmt_faseinjecao = u16_prmt_faseinjecao<<8;
+                u08_cnt_modorecebe++;
+                break;
+            case 2:
+                u16_prmt_faseinjecao = u16_prmt_faseinjecao | U1RXREG;
+                u08_cnt_modorecebe++;
+                break;
+            case 3:
+                u08_prmt_dwellignicao = U1RXREG;
+                u08_cnt_modorecebe++;
+                break;
+            case 4:
+                s16_prmt_avancoignicao = U1RXREG;
+                s16_prmt_avancoignicao = s16_prmt_avancoignicao<<8;
+                u08_cnt_modorecebe++;
+                break;
+            case 5:
+                s16_prmt_avancoignicao = s16_prmt_avancoignicao | U1RXREG;
+                u08_cnt_modorecebe++;
+                break;
+        }
+        
+        if(u08_cnt_modorecebe == 6)
+        {
+            u08_flg_modorecebe = 0;
+            WriteUART1_U08('O');
+            WriteUART1_U08('K');
+            WriteUART1_U08('!');
+        }           
+    } 
 }
 
 /**
@@ -250,10 +304,11 @@ void __attribute__((__interrupt__, __auto_psv__)) _U1RXInterrupt(void)
 void __attribute__((__interrupt__, __auto_psv__)) _T1Interrupt(void)
 {
     IFS0bits.T1IF = 0;
-    //WriteUART1_U16(u16_ctrl_tempoanterior_volta);
-    //WriteUART1_U16( (unsigned int)f32_tlmt_rpm );
-    //WriteUART1_U08('\n');
     LED_AZ = !LED_AZ;
+    
+    //Envia dados
+    //EnviaDadosUSB();
+    
 }
 
 /**
@@ -281,7 +336,7 @@ void __attribute__((__interrupt__, __auto_psv__)) _T3Interrupt(void)
 {
     IFS0bits.T3IF = 0;
     LED_BR = !LED_BR;
-    u08_ctrl_motorligado = 0;
+    //u08_ctrl_motorligado = 0;
 }
 
 /**
@@ -315,17 +370,13 @@ void __attribute__((__interrupt__, __auto_psv__)) _INT0Interrupt(void)
 int main(int argc, char** argv) {
 
     //Ports I/O
-    //LEDS
     InitPortas();
-    //TRISBbits.TRISB10 = 0;        //Portas.c
-    //LED_BR = 1;
-    //TRISBbits.TRISB9 = 0;
-    //LED_AZ = 1;
-    //TRISDbits.TRISD9 = 0;
-    //INJ_1 = 1;
     
     //Timer1
-    //InitTimer();
+    InitTimer();
+    
+    //UART 1
+    InitSerial();
     
     //SPI - Testar
     InitSPI();
@@ -334,48 +385,16 @@ int main(int argc, char** argv) {
     INTCON2bits.INT0EP  = 1;    //Borda de descida
     IEC0bits.INT0IE     = 1;    //Interrupção está Habilitada
     IFS0bits.INT0IF     = 0;    //Reset Flag
-
-    //Timer1
-    // Period = PR1 * prescaler * Tcy
-    T1CONbits.TCS       = 0;    //Oscilador interno
-    T1CONbits.TCKPS     = 3;    //Preescale
-    PR1 = 7839;
-    //PR1 = 15678;
-    //Interrupcao Timer1
-    IFS0bits.T1IF       = 0;    //Reset Flag
-    IEC0bits.T1IE       = 1;    //Interrupcao Habilitada
-    T1CONbits.TON       = 1;    //Timer Ligado
-
-    //Timer2
-    // Period = PR1 * prescaler * Tcy
-    T2CONbits.TCS       = 0;    //Oscilador interno
-    T2CONbits.TCKPS     = 0;    //Prescale
-    PR2 = 200;
-    //Interrupcao Timer2
-    IFS0bits.T2IF       = 0;    //Reset Flag
-    IEC0bits.T2IE       = 1;    //Habilita a interrupcao
-    T2CONbits.TON       = 1;    //Timer Ligado
-
-    //Timer3
-    // Period = PR1 * prescaler * Tcy
-    T3CONbits.TCS       = 0;    //Oscilador interno
-    T3CONbits.TCKPS     = 3;    //Prescale
-    PR3 = 7839;
-    //Interrupcao Timer3
-    IFS0bits.T3IF       = 0;    //Reset Flag
-    IEC0bits.T3IE       = 1;    //Habilita a interrupcao
-    T3CONbits.TON       = 1;    //Timer Ligado
     
-    //UART 1
-    U1MODEbits.UARTEN   = 1;    //Habilita UART1
-    U1MODEbits.ALTIO    = 1;    //Porta alternativa
-    U1STAbits.UTXEN     = 1;    //Habilita transmissoes
-    U1BRG = 10;                 //Para BaudRate 115200
-    //Interrupcao Uart1
-    IFS0bits.U1RXIF     = 0;    //Reset Flag
-    IEC0bits.U1RXIE     = 1;    //Interrupcao habilitada
+    ////UART 1
+    //U1MODEbits.UARTEN   = 1;    //Habilita UART1
+    //U1MODEbits.ALTIO    = 1;    //Porta alternativa
+    //U1STAbits.UTXEN     = 1;    //Habilita transmissoes
+    //U1BRG = 10;                 //Para BaudRate 115200
+    ////Interrupcao Uart1
+    //IFS0bits.U1RXIF     = 0;    //Reset Flag
+    //IEC0bits.U1RXIE     = 1;    //Interrupcao habilitada
 
-     
     //ADC
     ADCON3bits.SAMC     = 15;   //Temporizacao da conversao
     ADCON3bits.ADCS     = 15;
@@ -388,25 +407,19 @@ int main(int argc, char** argv) {
     //ADPCFG              = 0b1111111111111111;    //-> Colocar 0 nas entradas analógicas   //Portas.c
     ADCSSL              = 0b1111111111111111;
     ADCON1bits.ADON     = 1;    //Ativa o conversor
-    
-    
     //Interrupcao ADC
     IFS0bits.ADIF       = 0;    //Reset flag
     IEC0bits.ADIE       = 1;    //Habilita interrupcao
     
+    LerDadosEEPROM();
     
     while(1){
         
         if(u08_ctrl_motorligado){
-            //injetor_posicao(10, 50);
             injetor_tempo(10, 50);
-            //injetor_tempo(10, 180);
-            //ignicao(1, 20); 
             
             //Calculo de parametros;
-            f32_tlmt_rpm = (6000000/u16_ctrl_tempoanterior_volta);
-
-                
+            f32_tlmt_rpm = (6000000/u16_ctrl_tempoanterior_volta);     
         }
         else{
             INJ_1 = INJ_OFF;
