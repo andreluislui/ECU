@@ -41,3 +41,11 @@ void WriteUART1_U16(unsigned int data){
     while (U1STAbits.TRMT==0);      //Espera desocupar o registrador
         U1TXREG = data;
 }
+
+/**
+ * @Descricao Função responsáel pela habilitação da interrupção da serial. 
+ * @Parametro data Tipo: unsigned char | Dados: 0 - 1 | Resol.: 0..1 
+ */
+void HabilitaIntSerial(unsigned char flag){
+    IEC0bits.U1RXIE     = flag;    
+}

@@ -7,6 +7,7 @@
  * To Do List:
  * - Mudar a variável de contagem de tempo de u16 para u32 (unsigned long)
  * - Determinar onde o hardware falha para determinar o momento onde o motor desliga
+ * - Mudar referencial do PMS
  */
 
 //Teste
@@ -33,9 +34,7 @@ unsigned char u08_prmt_tempoinjecao = 1;            //Tempo de injecao
 unsigned int  u16_prmt_faseinjecao = 2;             //Fase do termino da injecao
 unsigned char u08_prmt_dwellignicao = 3;            //Tempo de carga da bobina de ignicao
 int s16_prmt_avancoignicao = 4;                     //Posicao do disparo da centelha
-
-//VARIAVEIS TELEMETRIA
-float f32_tlmt_rpm = 0;
+//unsigned int u16_rmt_refPMS = 0;                    //Graus de diferença do PMS da falha
 
 //VARIAVEIS BUFFERS ADC 
 unsigned int u16_adc_iat = 0;           //AN0
@@ -77,18 +76,18 @@ void LerDadosEEPROM(){
 
 void EnviaDadosUSB(){
     //Dados para o programa do PC 
-            WriteUART1_U16( (unsigned int)f32_tlmt_rpm );
-            WriteUART1_U08(u08_prmt_tempoinjecao);
-            WriteUART1_U16(u16_prmt_faseinjecao);
-            WriteUART1_U08(u08_prmt_dwellignicao);
-            WriteUART1_U16(s16_prmt_avancoignicao);
-            WriteUART1_U16(u16_adc_iat);
-            WriteUART1_U16(u16_adc_ect);
-            WriteUART1_U16(u16_adc_tps);
-            WriteUART1_U16(u16_adc_map);
-            WriteUART1_U16(u16_adc_lbd);
-            WriteUART1_U16(u16_adc_bat);
-            WriteUART1_U16(u16_adc_tec);
+    WriteUART1_U08(u08_prmt_tempoinjecao);
+    WriteUART1_U16(u16_prmt_faseinjecao);
+    WriteUART1_U08(u08_prmt_dwellignicao);
+    WriteUART1_U16(s16_prmt_avancoignicao);
+    WriteUART1_U16(u16_adc_iat);
+    WriteUART1_U16(u16_adc_ect);
+    WriteUART1_U16(u16_adc_tps);
+    WriteUART1_U16(u16_adc_map);
+    WriteUART1_U16(u16_adc_lbd);
+    WriteUART1_U16(u16_adc_bat);
+    WriteUART1_U16(u16_adc_tec);
+    //WriteUART1_U16(u16_rmt_refPMS);
 }
 
 /**
@@ -169,7 +168,13 @@ void injetor_tempo(unsigned char tempo, unsigned int fase){
 
 }
 
-//TESTAR!!!
+/**
+ * @Descricao Função responsáel pelo acionamento da bobina de ignição. 
+ * Função gerará o pulso da ignição com fim no grau expresso no parâmetro "avanco"
+ * e possuir duração expressa pela variável "dwell" 
+ * @Parametro tempo (ms) Tipo: unsigned char | Dados: 0 - inf+ | Resol.: 0..1
+ * @Parametro fase (graus) Tipo: signed int | Dados: -180 - 180 | Resol.: 0..1
+ */
 void ignicao_avanco(unsigned char dwell, int avanco){
     
     float           aux_liga = 0, 
@@ -285,6 +290,8 @@ void __attribute__((__interrupt__, __auto_psv__)) _U1RXInterrupt(void)
                 s16_prmt_avancoignicao = s16_prmt_avancoignicao | U1RXREG;
                 u08_cnt_modorecebe++;
                 break;
+            default:
+                break;
         }
         
         if(u08_cnt_modorecebe == 6)
@@ -294,7 +301,7 @@ void __attribute__((__interrupt__, __auto_psv__)) _U1RXInterrupt(void)
             WriteUART1_U08('K');
             WriteUART1_U08('!');
         }           
-    } 
+    }
 }
 
 /**
@@ -416,21 +423,28 @@ int main(int argc, char** argv) {
     while(1){
         
         if(u08_ctrl_motorligado){
+            
+            //Desabilita serial quando o motor esta rodando
+            HabilitaIntSerial(0);       
+            
             //void injetor_tempo(unsigned char tempo, unsigned int fase)
             //(10, 50) -> Passa pelo zero
             //(5, 90)  -> Fora do Zero
-            injetor_tempo(5, 90);
+            //injetor_tempo(5, 90);
+            injetor_tempo(u08_prmt_tempoinjecao, u16_prmt_faseinjecao);
             
             //void ignicao_avanco(unsigned char dwell, int avanco)
             //(10,50)  -> Avanço positivo
             //(10, -50)-> Carga no zero 
             //(5, -100)-> Carga após zero 
-            ignicao_avanco(5, -100);
-            
-            //Calculo de parametros;
-            //f32_tlmt_rpm = (6000000/u16_ctrl_tempoanterior_volta);     
+            //ignicao_avanco(5, -100);
+            ignicao_avanco(u08_prmt_dwellignicao, s16_prmt_avancoignicao);
+           
         }
         else{
+            //Habilita serial quando o motor esta rodando
+            HabilitaIntSerial(1);  
+            
             INJ_1 = INJ_OFF;
             IGN_1 = IGN_OFF;
             u16_ctrl_tempoentredentes = 0;
@@ -438,8 +452,6 @@ int main(int argc, char** argv) {
             u16_ctrl_tempovolta = 0;
             u16_ctrl_tempoanterior_volta = 0;                  
             u08_ctrl_motorligado = 0;
-            
-            f32_tlmt_rpm = 0;
         }
 
     }

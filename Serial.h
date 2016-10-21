@@ -41,6 +41,8 @@ void WriteUART1_U08(unsigned char data);
 
 void WriteUART1_U16(unsigned int data);
 
+void HabilitaIntSerial(unsigned char flag);
+
 // TODO Insert declarations
 
 // Comment a function and leverage automatic documentation with slash star star
