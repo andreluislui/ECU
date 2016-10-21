@@ -108,11 +108,11 @@ Program Memory  [Origin = 0x100, Length = 0x7f00]
 section                    address   length (PC units)   length (bytes) (dec)
 -------                    -------   -----------------   --------------------
 .text                        0x100               0x504           0x786  (1926)
-.text                        0x604               0x736           0xad1  (2769)
-.dinit                       0xd3a                0x14            0x1e  (30)
-.shared.dinit                0xd4e                 0x2             0x3  (3)
+.text                        0x604               0x7ec           0xbe2  (3042)
+.dinit                       0xdf0                0x14            0x1e  (30)
+.shared.dinit                0xe04                 0x2             0x3  (3)
 
-                 Total program memory used (bytes):         0x1278  (4728) 9%
+                 Total program memory used (bytes):         0x1389  (5001) 10%
 
 
 Ivt Memory  [Origin = 0x4, Length = 0x7c]
@@ -132,10 +132,10 @@ Data Memory  [Origin = 0x800, Length = 0x800]
 
 section                    address      alignment gaps    total length  (dec)
 -------                    -------      --------------    -------------------
-.nbss                        0x800                   0            0x1a  (26)
-.ndata                       0x81a                   0             0x8  (8)
+.nbss                        0x800                   0            0x1c  (28)
+.ndata                       0x81c                   0             0x8  (8)
 
-                 Total data memory used (bytes):           0x22  (34) 1%
+                 Total data memory used (bytes):           0x24  (36) 1%
 
 
 Dynamic Memory Usage
@@ -143,9 +143,9 @@ Dynamic Memory Usage
 region                     address                      maximum length  (dec)
 ------                     -------                      ---------------------
 heap                             0                                   0  (0)
-stack                        0x822                               0x7de  (2014)
+stack                        0x824                               0x7dc  (2012)
 
-                 Maximum dynamic memory (bytes):          0x7de  (2014)
+                 Maximum dynamic memory (bytes):          0x7dc  (2012)
 
 
 External Symbols in Data Memory (by address):
@@ -155,40 +155,42 @@ External Symbols in Data Memory (by address):
                     0x0804                  _u16_ctrl_tempovolta
                     0x0806                  _u16_ctrl_tempoanterior_volta
                     0x0808                  _u08_ctrl_motorligado
-                    0x080a                  _u16_adc_iat
-                    0x080c                  _u16_adc_ect
-                    0x080e                  _u16_adc_tps
-                    0x0810                  _u16_adc_map
-                    0x0812                  _u16_adc_lbd
-                    0x0814                  _u16_adc_bat
-                    0x0816                  _u16_adc_tec
-                    0x0818                  _u08_flg_modorecebe
-                    0x0819                  _u08_cnt_modorecebe
-                    0x081a                  _u08_prmt_tempoinjecao
-                    0x081c                  _u16_prmt_faseinjecao
-                    0x081e                  _u08_prmt_dwellignicao
-                    0x0820                  _s16_prmt_avancoignicao
+                    0x080a                  _u16_rmt_refPMS
+                    0x080c                  _u16_adc_iat
+                    0x080e                  _u16_adc_ect
+                    0x0810                  _u16_adc_tps
+                    0x0812                  _u16_adc_map
+                    0x0814                  _u16_adc_lbd
+                    0x0816                  _u16_adc_bat
+                    0x0818                  _u16_adc_tec
+                    0x081a                  _u08_flg_modorecebe
+                    0x081b                  _u08_cnt_modorecebe
+                    0x081c                  _u08_prmt_tempoinjecao
+                    0x081e                  _u16_prmt_faseinjecao
+                    0x0820                  _u08_prmt_dwellignicao
+                    0x0822                  _s16_prmt_avancoignicao
 
 External Symbols in Data Memory (by name):
 
-                    0x0820                  _s16_prmt_avancoignicao
-                    0x0819                  _u08_cnt_modorecebe
+                    0x0822                  _s16_prmt_avancoignicao
+                    0x081b                  _u08_cnt_modorecebe
                     0x0808                  _u08_ctrl_motorligado
-                    0x0818                  _u08_flg_modorecebe
-                    0x081e                  _u08_prmt_dwellignicao
-                    0x081a                  _u08_prmt_tempoinjecao
-                    0x0814                  _u16_adc_bat
-                    0x080c                  _u16_adc_ect
-                    0x080a                  _u16_adc_iat
-                    0x0812                  _u16_adc_lbd
-                    0x0810                  _u16_adc_map
-                    0x0816                  _u16_adc_tec
-                    0x080e                  _u16_adc_tps
+                    0x081a                  _u08_flg_modorecebe
+                    0x0820                  _u08_prmt_dwellignicao
+                    0x081c                  _u08_prmt_tempoinjecao
+                    0x0816                  _u16_adc_bat
+                    0x080e                  _u16_adc_ect
+                    0x080c                  _u16_adc_iat
+                    0x0814                  _u16_adc_lbd
+                    0x0812                  _u16_adc_map
+                    0x0818                  _u16_adc_tec
+                    0x0810                  _u16_adc_tps
                     0x0802                  _u16_ctrl_tempoanterior_cfalha
                     0x0806                  _u16_ctrl_tempoanterior_volta
                     0x0800                  _u16_ctrl_tempoentredentes
                     0x0804                  _u16_ctrl_tempovolta
-                    0x081c                  _u16_prmt_faseinjecao
+                    0x081e                  _u16_prmt_faseinjecao
+                    0x080a                  _u16_rmt_refPMS
 
 External Symbols in Program Memory (by address):
 
@@ -228,24 +230,24 @@ External Symbols in Program Memory (by address):
                   0x00057c                  ___floatundisf
                   0x0005da                  __funpack
                   0x000604                  _SalvarDadosEEPROM
-                  0x000648                  _LerDadosEEPROM
-                  0x000698                  _EnviaDadosUSB
-                  0x0006ca                  _injetor_posicao
-                  0x000790                  _injetor_tempo
-                  0x0008b8                  _ignicao_avanco
-                  0x000a08                  __ADCInterrupt
-                  0x000a38                  __U1RXInterrupt
-                  0x000b26                  __T1Interrupt
-                  0x000b5e                  __T2Interrupt
-                  0x000b7e                  __T3Interrupt
-                  0x000bb8                  __INT0Interrupt
-                  0x000bea                  _main
-                  0x000c68                  _InitSerial
-                  0x000c7c                  _WriteUART1_U08
-                  0x000c94                  _WriteUART1_U16
-                  0x000cbe                  _HabilitaIntSerial
-                  0x000cda                  _InitTimer
-                  0x000d1c                  _InitPortas
+                  0x000660                  _LerDadosEEPROM
+                  0x0006ce                  _EnviaDadosUSB
+                  0x000704                  _injetor_posicao
+                  0x0007ca                  _injetor_tempo
+                  0x000920                  _ignicao_avanco
+                  0x000a88                  __ADCInterrupt
+                  0x000ab8                  __U1RXInterrupt
+                  0x000bdc                  __T1Interrupt
+                  0x000c14                  __T2Interrupt
+                  0x000c34                  __T3Interrupt
+                  0x000c6e                  __INT0Interrupt
+                  0x000ca0                  _main
+                  0x000d1e                  _InitSerial
+                  0x000d32                  _WriteUART1_U08
+                  0x000d4a                  _WriteUART1_U16
+                  0x000d74                  _HabilitaIntSerial
+                  0x000d90                  _InitTimer
+                  0x000dd2                  _InitPortas
                   0xf8000a                  __FGS.sec
 
 External Symbols in Program Memory (by name):
@@ -257,26 +259,26 @@ External Symbols in Program Memory (by name):
                   0x000248                  _EEPROM_Write_Byte
                   0x000214                  _EEPROM_Write_Disable
                   0x000204                  _EEPROM_Write_Enable
-                  0x000698                  _EnviaDadosUSB
-                  0x000cbe                  _HabilitaIntSerial
-                  0x000d1c                  _InitPortas
+                  0x0006ce                  _EnviaDadosUSB
+                  0x000d74                  _HabilitaIntSerial
+                  0x000dd2                  _InitPortas
                   0x0001bc                  _InitSPI
-                  0x000c68                  _InitSerial
-                  0x000cda                  _InitTimer
-                  0x000648                  _LerDadosEEPROM
+                  0x000d1e                  _InitSerial
+                  0x000d90                  _InitTimer
+                  0x000660                  _LerDadosEEPROM
                   0x0001ea                  _SPI_Write
                   0x000604                  _SalvarDadosEEPROM
-                  0x000c7c                  _WriteUART1_U08
-                  0x000c94                  _WriteUART1_U16
-                  0x000a08                  __ADCInterrupt
+                  0x000d32                  _WriteUART1_U08
+                  0x000d4a                  _WriteUART1_U16
+                  0x000a88                  __ADCInterrupt
                   0x0002ec                  __DefaultInterrupt
                   0xf8000a                  __FGS.sec
-                  0x000bb8                  __INT0Interrupt
+                  0x000c6e                  __INT0Interrupt
                   0x0001a8                  __SPI1Interrupt
-                  0x000b26                  __T1Interrupt
-                  0x000b5e                  __T2Interrupt
-                  0x000b7e                  __T3Interrupt
-                  0x000a38                  __U1RXInterrupt
+                  0x000bdc                  __T1Interrupt
+                  0x000c14                  __T2Interrupt
+                  0x000c34                  __T3Interrupt
+                  0x000ab8                  __U1RXInterrupt
                   0x0002f2                  ___addsf3
                   0x0003ac                  ___divsf3
                   0x000430                  ___eqsf2
@@ -301,10 +303,10 @@ External Symbols in Program Memory (by name):
                   0x00048e                  __funpack2
                   0x00012c                  __psv_init
                   0x000100                  __resetPRI
-                  0x0008b8                  _ignicao_avanco
-                  0x0006ca                  _injetor_posicao
-                  0x000790                  _injetor_tempo
-                  0x000bea                  _main
+                  0x000920                  _ignicao_avanco
+                  0x000704                  _injetor_posicao
+                  0x0007ca                  _injetor_tempo
+                  0x000ca0                  _main
 
 Memory Configuration
 
@@ -487,13 +489,13 @@ userdata
 .comment
  *(.comment)
 
-.debug_info       0x000000       0x2e0a
+.debug_info       0x000000       0x2e3d
  *(.debug_info)
- .debug_info      0x000000       0x1168 build/default/production/main.o
- .debug_info      0x001168        0x4f1 build/default/production/Portas.o
- .debug_info      0x001659        0x99d build/default/production/SPI.o
- .debug_info      0x001ff6        0x741 build/default/production/Timers.o
- .debug_info      0x002737        0x6d3 build/default/production/Serial.o
+ .debug_info      0x000000       0x119b build/default/production/main.o
+ .debug_info      0x00119b        0x4f1 build/default/production/Portas.o
+ .debug_info      0x00168c        0x99d build/default/production/SPI.o
+ .debug_info      0x002029        0x741 build/default/production/Timers.o
+ .debug_info      0x00276a        0x6d3 build/default/production/Serial.o
  *(.gnu.linkonce.wi.*)
 
 .debug_abbrev     0x000000        0x505
@@ -504,13 +506,13 @@ userdata
  .debug_abbrev    0x000388         0xcb build/default/production/Timers.o
  .debug_abbrev    0x000453         0xb2 build/default/production/Serial.o
 
-.debug_line       0x000000        0x44f
+.debug_line       0x000000        0x467
  *(.debug_line)
- .debug_line      0x000000        0x190 build/default/production/main.o
- .debug_line      0x000190         0x9c build/default/production/Portas.o
- .debug_line      0x00022c         0xdb build/default/production/SPI.o
- .debug_line      0x000307         0xa3 build/default/production/Timers.o
- .debug_line      0x0003aa         0xa5 build/default/production/Serial.o
+ .debug_line      0x000000        0x1a8 build/default/production/main.o
+ .debug_line      0x0001a8         0x9c build/default/production/Portas.o
+ .debug_line      0x000244         0xdb build/default/production/SPI.o
+ .debug_line      0x00031f         0xa3 build/default/production/Timers.o
+ .debug_line      0x0003c2         0xa5 build/default/production/Serial.o
 
 .debug_frame      0x000000        0x426
  *(.debug_frame)
@@ -520,13 +522,13 @@ userdata
  .debug_frame     0x000372         0x30 build/default/production/Timers.o
  .debug_frame     0x0003a2         0x84 build/default/production/Serial.o
 
-.debug_str        0x000000        0x284
+.debug_str        0x000000        0x293
  *(.debug_str)
- .debug_str       0x000000        0x1c2 build/default/production/main.o
- .debug_str       0x0001c2         0x28 build/default/production/Portas.o
- .debug_str       0x0001ea         0x35 build/default/production/SPI.o
- .debug_str       0x00021f         0x3e build/default/production/Timers.o
- .debug_str       0x00025d         0x27 build/default/production/Serial.o
+ .debug_str       0x000000        0x1d1 build/default/production/main.o
+ .debug_str       0x0001d1         0x28 build/default/production/Portas.o
+ .debug_str       0x0001f9         0x35 build/default/production/SPI.o
+ .debug_str       0x00022e         0x3e build/default/production/Timers.o
+ .debug_str       0x00026c         0x27 build/default/production/Serial.o
 
 .debug_loc
  *(.debug_loc)
@@ -535,18 +537,18 @@ userdata
  *(.debug_macinfo)
 
 .debug_pubnames
-                  0x000000        0x407
+                  0x000000        0x41a
  *(.debug_pubnames)
  .debug_pubnames
-                  0x000000        0x292 build/default/production/main.o
+                  0x000000        0x2a5 build/default/production/main.o
  .debug_pubnames
-                  0x000292         0x21 build/default/production/Portas.o
+                  0x0002a5         0x21 build/default/production/Portas.o
  .debug_pubnames
-                  0x0002b3         0xd7 build/default/production/SPI.o
+                  0x0002c6         0xd7 build/default/production/SPI.o
  .debug_pubnames
-                  0x00038a         0x20 build/default/production/Timers.o
+                  0x00039d         0x20 build/default/production/Timers.o
  .debug_pubnames
-                  0x0003aa         0x5d build/default/production/Serial.o
+                  0x0003bd         0x5d build/default/production/Serial.o
 
 .debug_ranges
  *(.debug_ranges)
@@ -1325,29 +1327,30 @@ __c30_signature
  __c30_signature
                   0x000495          0x6 c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a(funpack.eo)
 
-.nbss               0x0800         0x1a
- .nbss              0x0800         0x1a build/default/production/main.o
+.nbss               0x0800         0x1c
+ .nbss              0x0800         0x1c build/default/production/main.o
                     0x0800                  _u16_ctrl_tempoentredentes
                     0x0802                  _u16_ctrl_tempoanterior_cfalha
                     0x0804                  _u16_ctrl_tempovolta
                     0x0806                  _u16_ctrl_tempoanterior_volta
                     0x0808                  _u08_ctrl_motorligado
-                    0x080a                  _u16_adc_iat
-                    0x080c                  _u16_adc_ect
-                    0x080e                  _u16_adc_tps
-                    0x0810                  _u16_adc_map
-                    0x0812                  _u16_adc_lbd
-                    0x0814                  _u16_adc_bat
-                    0x0816                  _u16_adc_tec
-                    0x0818                  _u08_flg_modorecebe
-                    0x0819                  _u08_cnt_modorecebe
+                    0x080a                  _u16_rmt_refPMS
+                    0x080c                  _u16_adc_iat
+                    0x080e                  _u16_adc_ect
+                    0x0810                  _u16_adc_tps
+                    0x0812                  _u16_adc_map
+                    0x0814                  _u16_adc_lbd
+                    0x0816                  _u16_adc_bat
+                    0x0818                  _u16_adc_tec
+                    0x081a                  _u08_flg_modorecebe
+                    0x081b                  _u08_cnt_modorecebe
 
-.ndata              0x081a          0x8
- .ndata             0x081a          0x8 build/default/production/main.o
-                    0x081a                  _u08_prmt_tempoinjecao
-                    0x081c                  _u16_prmt_faseinjecao
-                    0x081e                  _u08_prmt_dwellignicao
-                    0x0820                  _s16_prmt_avancoignicao
+.ndata              0x081c          0x8
+ .ndata             0x081c          0x8 build/default/production/main.o
+                    0x081c                  _u08_prmt_tempoinjecao
+                    0x081e                  _u16_prmt_faseinjecao
+                    0x0820                  _u08_prmt_dwellignicao
+                    0x0822                  _s16_prmt_avancoignicao
 
 .config_ICS       0xf8000c          0x2
  .config_ICS      0xf8000c          0x2 build/default/production/main.o
@@ -1398,33 +1401,33 @@ __c30_signature
  .ivt._SPI1Interrupt
                   0x000024          0x2 build/default/production/SPI.o
 
-.text             0x000604        0x736
- .text            0x000604        0x664 build/default/production/main.o
+.text             0x000604        0x7ec
+ .text            0x000604        0x71a build/default/production/main.o
                   0x000604                  _SalvarDadosEEPROM
-                  0x000648                  _LerDadosEEPROM
-                  0x000698                  _EnviaDadosUSB
-                  0x0006ca                  _injetor_posicao
-                  0x000790                  _injetor_tempo
-                  0x0008b8                  _ignicao_avanco
-                  0x000a08                  __ADCInterrupt
-                  0x000a38                  __U1RXInterrupt
-                  0x000b26                  __T1Interrupt
-                  0x000b5e                  __T2Interrupt
-                  0x000b7e                  __T3Interrupt
-                  0x000bb8                  __INT0Interrupt
-                  0x000bea                  _main
- .text            0x000c68         0x72 build/default/production/Serial.o
-                  0x000c68                  _InitSerial
-                  0x000c7c                  _WriteUART1_U08
-                  0x000c94                  _WriteUART1_U16
-                  0x000cbe                  _HabilitaIntSerial
- .text            0x000cda         0x42 build/default/production/Timers.o
-                  0x000cda                  _InitTimer
- .text            0x000d1c         0x1e build/default/production/Portas.o
-                  0x000d1c                  _InitPortas
+                  0x000660                  _LerDadosEEPROM
+                  0x0006ce                  _EnviaDadosUSB
+                  0x000704                  _injetor_posicao
+                  0x0007ca                  _injetor_tempo
+                  0x000920                  _ignicao_avanco
+                  0x000a88                  __ADCInterrupt
+                  0x000ab8                  __U1RXInterrupt
+                  0x000bdc                  __T1Interrupt
+                  0x000c14                  __T2Interrupt
+                  0x000c34                  __T3Interrupt
+                  0x000c6e                  __INT0Interrupt
+                  0x000ca0                  _main
+ .text            0x000d1e         0x72 build/default/production/Serial.o
+                  0x000d1e                  _InitSerial
+                  0x000d32                  _WriteUART1_U08
+                  0x000d4a                  _WriteUART1_U16
+                  0x000d74                  _HabilitaIntSerial
+ .text            0x000d90         0x42 build/default/production/Timers.o
+                  0x000d90                  _InitTimer
+ .text            0x000dd2         0x1e build/default/production/Portas.o
+                  0x000dd2                  _InitPortas
 
-.dinit            0x000d3a         0x14
- .dinit           0x000d3a         0x14 data_init
+.dinit            0x000df0         0x14
+ .dinit           0x000df0         0x14 data_init
 
-.shared.dinit     0x000d4e          0x2
- .shared.dinit    0x000d4e          0x2 shared_data_init
+.shared.dinit     0x000e04          0x2
+ .shared.dinit    0x000e04          0x2 shared_data_init

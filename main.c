@@ -34,7 +34,7 @@ unsigned char u08_prmt_tempoinjecao = 1;            //Tempo de injecao
 unsigned int  u16_prmt_faseinjecao = 2;             //Fase do termino da injecao
 unsigned char u08_prmt_dwellignicao = 3;            //Tempo de carga da bobina de ignicao
 int s16_prmt_avancoignicao = 4;                     //Posicao do disparo da centelha
-//unsigned int u16_rmt_refPMS = 0;                    //Graus de diferença do PMS da falha
+unsigned int u16_rmt_refPMS = 0;                    //Graus de diferença do PMS da falha
 
 //VARIAVEIS BUFFERS ADC 
 unsigned int u16_adc_iat = 0;           //AN0
@@ -59,6 +59,9 @@ void SalvarDadosEEPROM(){
     aux = (s16_prmt_avancoignicao>>8) & 0xFF;
     EEPROM_Write_Byte(aux, 0x004);
     EEPROM_Write_Byte((unsigned char) s16_prmt_avancoignicao, 0x005);
+    aux = (u16_rmt_refPMS>>8) & 0xFF;
+    EEPROM_Write_Byte(aux, 0x006);
+    EEPROM_Write_Byte((unsigned char) u16_rmt_refPMS, 0x007);
 }
 
 void LerDadosEEPROM(){
@@ -72,6 +75,9 @@ void LerDadosEEPROM(){
     s16_prmt_avancoignicao = EEPROM_Read_Byte(0x004);
     s16_prmt_avancoignicao = s16_prmt_avancoignicao<<8;
     s16_prmt_avancoignicao = s16_prmt_avancoignicao | EEPROM_Read_Byte(0x005);
+    u16_rmt_refPMS = EEPROM_Read_Byte(0x006);
+    u16_rmt_refPMS = u16_rmt_refPMS<<8;
+    u16_rmt_refPMS = u16_rmt_refPMS | EEPROM_Read_Byte(0x007);
 }
 
 void EnviaDadosUSB(){
@@ -80,6 +86,7 @@ void EnviaDadosUSB(){
     WriteUART1_U16(u16_prmt_faseinjecao);
     WriteUART1_U08(u08_prmt_dwellignicao);
     WriteUART1_U16(s16_prmt_avancoignicao);
+    WriteUART1_U16(u16_rmt_refPMS);
     WriteUART1_U16(u16_adc_iat);
     WriteUART1_U16(u16_adc_ect);
     WriteUART1_U16(u16_adc_tps);
@@ -87,7 +94,7 @@ void EnviaDadosUSB(){
     WriteUART1_U16(u16_adc_lbd);
     WriteUART1_U16(u16_adc_bat);
     WriteUART1_U16(u16_adc_tec);
-    //WriteUART1_U16(u16_rmt_refPMS);
+    
 }
 
 /**
@@ -135,9 +142,17 @@ void injetor_tempo(unsigned char tempo, unsigned int fase){
     
     float           aux_liga = 0, 
                     aux_desliga = 0;
-    unsigned int    aux_tempo = 0;
+    unsigned int    aux_tempo = 0,
+                    aux_fase = 0;
     
-    aux_desliga = ((float)u16_ctrl_tempoanterior_volta/360)*((float)fase);
+    //Calculo da fse com a nova referencia 
+    if (fase + u16_rmt_refPMS > 360)
+        aux_fase = fase +u16_rmt_refPMS - 360;
+    else 
+        aux_fase = fase + u16_rmt_refPMS;
+    
+    //aux_desliga = ((float)u16_ctrl_tempoanterior_volta/360)*((float)fase);
+    aux_desliga = ((float)u16_ctrl_tempoanterior_volta/360)*((float)aux_fase);
     aux_liga = u16_ctrl_tempoanterior_volta - ( ((unsigned int)tempo)*100 - aux_desliga);
     aux_tempo = tempo*100;
 
@@ -186,7 +201,13 @@ void ignicao_avanco(unsigned char dwell, int avanco){
         aux_avanco = 360 - avanco;
     else 
         aux_avanco = abs(avanco);
-        
+    
+    //Calculo da fse com a nova referencia 
+    if (aux_avanco + u16_rmt_refPMS > 360)
+        aux_avanco = aux_avanco +u16_rmt_refPMS - 360;
+    else 
+        aux_avanco = aux_avanco + u16_rmt_refPMS;
+    
     aux_desliga = ((float)u16_ctrl_tempoanterior_volta/360)*((float)aux_avanco);
     aux_liga = u16_ctrl_tempoanterior_volta - ( ((unsigned int)dwell)*100 - aux_desliga);
     aux_tempo = dwell*100;
@@ -256,6 +277,9 @@ void __attribute__((__interrupt__, __auto_psv__)) _U1RXInterrupt(void)
         case 'E':
             //Grava parametros na EEPROM
             SalvarDadosEEPROM();
+            WriteUART1_U08('O');
+            WriteUART1_U08('K');
+            WriteUART1_U08('!');
             break;
         default:
             break;
@@ -290,11 +314,20 @@ void __attribute__((__interrupt__, __auto_psv__)) _U1RXInterrupt(void)
                 s16_prmt_avancoignicao = s16_prmt_avancoignicao | U1RXREG;
                 u08_cnt_modorecebe++;
                 break;
+            case 6:
+                u16_rmt_refPMS = U1RXREG;
+                u16_rmt_refPMS = u16_rmt_refPMS<<8;
+                u08_cnt_modorecebe++;
+                break;
+            case 7:
+                u16_rmt_refPMS = u16_rmt_refPMS | U1RXREG;
+                u08_cnt_modorecebe++;
+                break;
             default:
                 break;
         }
         
-        if(u08_cnt_modorecebe == 6)
+        if(u08_cnt_modorecebe == 8)
         {
             u08_flg_modorecebe = 0;
             WriteUART1_U08('O');
