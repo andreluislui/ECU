@@ -15,7 +15,7 @@ void InitPortas(){
     TRISBbits.TRISB10 = 0;
     TRISBbits.TRISB9 = 0;
     TRISDbits.TRISD2 = 0;
-    TRISBbits.TRISB12 = 0;
+    TRISDbits.TRISD3 = 0;
     TRISDbits.TRISD9 = 0;
     
     ADPCFG              = 0b1110111011000100;    //-> Colocar 0 nas entradas analógicas

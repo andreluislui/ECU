@@ -7,9 +7,6 @@
  * To Do List:
  * - Mudar a variável de contagem de tempo de u16 para u32 (unsigned long)
  * - Determinar onde o hardware falha para determinar o momento onde o motor desliga
- * - Leitura da EEPROM 
- * - Escrita da EEPROM
- * - Conexão com LabVIEW
  */
 
 //Teste
@@ -173,15 +170,18 @@ void injetor_tempo(unsigned char tempo, unsigned int fase){
 }
 
 //TESTAR!!!
-void ignicao(unsigned char dwell, int avanco){
+void ignicao_avanco(unsigned char dwell, int avanco){
     
     float           aux_liga = 0, 
                     aux_desliga = 0;
     unsigned int    aux_tempo = 0, 
                     aux_avanco = 0;
     
-    aux_avanco = 360 - avanco;
-    
+    if(avanco >= 0)
+        aux_avanco = 360 - avanco;
+    else 
+        aux_avanco = abs(avanco);
+        
     aux_desliga = ((float)u16_ctrl_tempoanterior_volta/360)*((float)aux_avanco);
     aux_liga = u16_ctrl_tempoanterior_volta - ( ((unsigned int)dwell)*100 - aux_desliga);
     aux_tempo = dwell*100;
@@ -336,7 +336,7 @@ void __attribute__((__interrupt__, __auto_psv__)) _T3Interrupt(void)
 {
     IFS0bits.T3IF = 0;
     LED_BR = !LED_BR;
-    //u08_ctrl_motorligado = 0;
+    u08_ctrl_motorligado = 0;
 }
 
 /**
@@ -416,13 +416,23 @@ int main(int argc, char** argv) {
     while(1){
         
         if(u08_ctrl_motorligado){
-            injetor_tempo(10, 50);
+            //void injetor_tempo(unsigned char tempo, unsigned int fase)
+            //(10, 50) -> Passa pelo zero
+            //(5, 90)  -> Fora do Zero
+            injetor_tempo(5, 90);
+            
+            //void ignicao_avanco(unsigned char dwell, int avanco)
+            //(10,50)  -> Avanço positivo
+            //(10, -50)-> Carga no zero 
+            //(5, -100)-> Carga após zero 
+            ignicao_avanco(5, -100);
             
             //Calculo de parametros;
-            f32_tlmt_rpm = (6000000/u16_ctrl_tempoanterior_volta);     
+            //f32_tlmt_rpm = (6000000/u16_ctrl_tempoanterior_volta);     
         }
         else{
             INJ_1 = INJ_OFF;
+            IGN_1 = IGN_OFF;
             u16_ctrl_tempoentredentes = 0;
             u16_ctrl_tempoanterior_cfalha = 0;    
             u16_ctrl_tempovolta = 0;

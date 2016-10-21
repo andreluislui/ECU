@@ -34,7 +34,7 @@
 
 #define LED_BR PORTBbits.RB10
 #define LED_AZ PORTBbits.RB9
-#define IGN_1 PORTBbits.RB12
+#define IGN_1 PORTDbits.RD3
 #define INJ_1 PORTDbits.RD9
 #define EEPROM_SS PORTDbits.RD2
 
