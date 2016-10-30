@@ -1,0 +1,9 @@
+#################
+## Eclipse
+#################
+
+build/
+debug/
+dist/
+nbproject/
+
